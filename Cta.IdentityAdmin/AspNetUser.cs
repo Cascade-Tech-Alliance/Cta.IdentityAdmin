@@ -20,6 +20,7 @@ namespace Cta.IdentityAdmin
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public AspNetUser()
         {
+            Id = Guid.NewGuid().ToString();
             this.AspNetUserClaims = new HashSet<AspNetUserClaim>();
             this.AspNetUserLogins = new HashSet<AspNetUserLogin>();
             this.AspNetUserTokens = new HashSet<AspNetUserToken>();
@@ -44,10 +45,13 @@ namespace Cta.IdentityAdmin
 
         public bool Enabled
         {
-            get { return LockoutEnd == null; }
+            get
+            {
+                return LockoutEnd != new DateTimeOffset(9999, 12, 31, 0, 0, 0, new TimeSpan(0, 0, 0));
+            }
             set
             {
-                LockoutEnd = value ? (DateTimeOffset?) null : new DateTimeOffset(9999,21,31,0,0,0,new TimeSpan(0,0,0));
+                LockoutEnd = value ? (DateTimeOffset?) null : new DateTimeOffset(9999, 12, 31, 0, 0, 0, new TimeSpan(0, 0, 0));
             }
         }
 
@@ -97,8 +101,14 @@ namespace Cta.IdentityAdmin
 
         public bool IsInRole(string roleName)
         {
-            return AspNetRoles.Any(x => x.Name == roleName);
+            return AspNetRoles.Any(x => x.NormalizedName == roleName.ToLower());
         }
 
+        public AccountOrigin Origin { get; set; }
+        public string AccountSource { get; set; }
+    }
+
+    public enum AccountOrigin {
+        Auto, Manual
     }
 }

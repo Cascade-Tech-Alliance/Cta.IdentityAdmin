@@ -20,6 +20,7 @@ namespace Cta.IdentityAdmin
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public AspNetUser()
         {
+            Id = Guid.NewGuid().ToString();
             this.AspNetUserClaims = new HashSet<AspNetUserClaim>();
             this.AspNetUserLogins = new HashSet<AspNetUserLogin>();
             this.AspNetUserTokens = new HashSet<AspNetUserToken>();
@@ -100,5 +101,10 @@ namespace Cta.IdentityAdmin
             return AspNetRoles.Any(x => x.Name == roleName);
         }
 
+        public AccountOrigin Origin { get; set; }
+    }
+
+    public enum AccountOrigin {
+        Auto, Manual
     }
 }

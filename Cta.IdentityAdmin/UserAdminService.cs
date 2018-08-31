@@ -1,4 +1,6 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 
 namespace Cta.IdentityAdmin
@@ -37,7 +39,7 @@ namespace Cta.IdentityAdmin
         {
             using (var db = new AspNetIdentity())
             {
-                var user = GetUserById(userId);
+                var user = db.AspNetUsers.Where(x => x.Id == userId).Include(x => x.AspNetRoles).FirstOrDefault();
                 if (user.IsInRole(roleName)) return UserAdminServiceResult.RoleChangeSuccessful;
                 var role = db.AspNetRoles.FirstOrDefault(x => x.NormalizedName == roleName.ToLower());
                 user.AspNetRoles.Add(role);
@@ -50,7 +52,7 @@ namespace Cta.IdentityAdmin
         {
             using (var db = new AspNetIdentity())
             {
-                var user = GetUserById(userId);
+                var user = db.AspNetUsers.Where(x => x.Id == userId).Include(x => x.AspNetRoles).FirstOrDefault();
                 if (!user.IsInRole(roleName)) return UserAdminServiceResult.RoleChangeSuccessful;
                 var role = db.AspNetRoles.FirstOrDefault(x => x.NormalizedName == roleName.ToLower());
                 user.AspNetRoles.Remove(role);
@@ -63,9 +65,9 @@ namespace Cta.IdentityAdmin
         {
             using (var db = new AspNetIdentity())
             {
-                var user = GetUserById(userId);
-                if(user == null) return UserAdminServiceResult.UserDoesNotExist;
-                var targetUser = GetUserByUsername(newUsername);
+                var user = db.AspNetUsers.SingleOrDefault(u => u.Id == userId);
+                if (user == null) return UserAdminServiceResult.UserDoesNotExist;
+                var targetUser = db.AspNetUsers.FirstOrDefault(x => x.UserName == newUsername);
                 if (targetUser != null) return UserAdminServiceResult.UsernameUnavailable;
                 user.UserName = newUsername;
                 db.SaveChanges();
@@ -95,8 +97,10 @@ namespace Cta.IdentityAdmin
         {
             using (var db = new AspNetIdentity())
             {
-                var targetUser = GetUserByUsername(username);
+                var targetUser = db.AspNetUsers.FirstOrDefault(x => x.UserName == username);
+
                 if (targetUser != null) return null;
+
                 var newUser = new AspNetUser {
                     UserName = username,
                     NormalizedUserName = username.ToLower(),
@@ -104,11 +108,43 @@ namespace Cta.IdentityAdmin
                     NormalizedEmail = email.ToLower(),
                     FirstName = firstName,
                     LastName = lastName,
-                    PhoneNumber = phoneNumber
+                    PhoneNumber = phoneNumber,
+                    //a new security stamp is necessary for new users, where password hash 
+                    //is still null, to allow these new users to reset their password
+                    SecurityStamp = Guid.NewGuid().ToString() 
                 };
                 db.AspNetUsers.Add(newUser);
                 db.SaveChanges();
                 return newUser;
+            }
+        }
+
+        public AspNetRole GetRoleByName(string roleName)
+        {
+            using (var db = new AspNetIdentity())
+            {
+                var role = db.AspNetRoles.FirstOrDefault(x => x.Name == roleName);
+                return role;
+            }
+        }
+
+        public List<AspNetUser> GetUsersByRole(string roleName)
+        {
+            using (var db = new AspNetIdentity())
+            {
+                if (string.IsNullOrWhiteSpace(roleName)) return null;
+
+                var roles = db.AspNetRoles.Where(r => r.Name == roleName);
+
+                if (!roles.Any()) return null;
+
+                var roleId = roles.First().Id;
+
+                return db.AspNetUsers
+                    .Where(x => x.AspNetRoles.Any(r => r.Id == roleId))
+                    .Include(x => x.AspNetRoles)
+                    .Include(x => x.AspNetUserClaims)
+                    .ToList();
             }
         }
 

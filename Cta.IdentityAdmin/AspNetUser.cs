@@ -45,6 +45,10 @@ namespace Cta.IdentityAdmin
 
         public bool Enabled
         {
+            get {
+                return IsInRole("ods_user");
+            }
+            /*
             get
             {
                 return LockoutEnd != new DateTimeOffset(9999, 12, 31, 0, 0, 0, new TimeSpan(0, 0, 0));
@@ -53,6 +57,7 @@ namespace Cta.IdentityAdmin
             {
                 LockoutEnd = value ? (DateTimeOffset?) null : new DateTimeOffset(9999, 12, 31, 0, 0, 0, new TimeSpan(0, 0, 0));
             }
+            */
         }
 
         public string FirstName

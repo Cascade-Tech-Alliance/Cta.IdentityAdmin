@@ -89,7 +89,6 @@ namespace Cta.IdentityAdmin
                 x.Email = user.Email;
                 x.NormalizedEmail = user.Email.ToLower();
                 x.PhoneNumber = user.PhoneNumber;
-                x.Enabled = user.Enabled;
                 db.SaveChanges();
             }
             return UserAdminServiceResult.UserUpdateSuccessful;
